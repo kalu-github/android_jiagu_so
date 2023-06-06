@@ -1,0 +1,57 @@
+apply plugin: 'com.android.library'
+
+android {
+
+    compileSdkVersion 33
+    buildToolsVersion "33.0.1"
+    namespace 'com.suli.protect'
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11"
+                cppFlags "-Wl,-Bsymbolic"
+                version "3.18.1"
+                abiFilters 'armeabi-v7a'
+//                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+
+task buildLib(type: Copy) {
+    from 'build/intermediates/bundles/default/classes.jar', 'build/intermediates/bundles/default/jni'
+    include 'x86/', '*.jar'
+    rename 'classes.jar', 'native.jar'
+    into '../app/libs'
+}
+
+buildLib.dependsOn(build)
+
+task cryptoCode(type: Exec) {
+    workingDir '../crypto_code'
+    commandLine './a.out', '../app/libs/x86/libnative.so'
+}
+
+cryptoCode.dependsOn(buildLib)
